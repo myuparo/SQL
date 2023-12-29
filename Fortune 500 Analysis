@@ -1,3 +1,5 @@
+-- This analysis utilized the following Fortune 500 dataset:
+
 CREATE TABLE fortune_companies (
     company_id INTEGER PRIMARY KEY,
     company_name TEXT,
@@ -55,3 +57,55 @@ VALUES
     ('Company II', 'Telecommunications', 110.5, 2000, 1, 21, 12, 4.9),
     ('Company JJ', 'Manufacturing', 370.0, 3100, 1, 20, 12, 7.6),
     ('Company KK', 'Healthcare', 150.2, 3400, 0, 16, 8, 5.3);
+
+-- Analysis begins here
+
+-- Show a list of industries that have companies with healthcare benefits
+
+SELECT industry
+  ,COUNT(company_name) AS "No_of_companies_with_healthcare"
+FROM fortune_companies
+WHERE healthcare_benefits = 1
+GROUP BY industry
+ORDER BY No_of_companies_with_healthcare desc;
+
+-- Show a list of industries with total revenues above $1500 billion with average maternity leave weeks of at least 8 weeks
+
+SELECT industry, ROUND(SUM(revenue)) AS "total_revenues"
+  , ROUND(AVG(maternity_leave_weeks)) AS "avg_maternity_leave_weeks"
+FROM fortune_companies
+GROUP BY industry
+HAVING total_revenues > 1500 AND avg_maternity_leave_weeks >8 
+ORDER BY total_revenues desc;
+
+-- Categorize PTO days offered by energy and healthcare companies into three tiers: best, still considerables, few PTOs
+
+SELECT company_name, industry,
+    CASE WHEN paid_time_off_days >= 20 THEN "Best PTOs"
+    WHEN paid_time_off_days >= 15 THEN "Still Considerable"
+    ELSE "Few PTOs, look into other benefits"
+    END AS "PTO Ranking"
+FROM fortune_companies
+WHERE industry = "Energy" OR industry = "Healthcare"
+GROUP BY company_name
+ORDER BY industry;
+
+-- Assign employee retention for technology industry based on average employee tenure
+
+SELECT company_name, employees, avg_employee_tenure, healthcare_benefits,
+  CASE WHEN avg_employee_tenure > 6.5 THEN  "High Retention"
+  WHEN avg_employee_tenure > 5.5 THEN  "Good Retention"
+  WHEN avg_employee_tenure > 5 THEN  "Average Retention"
+  ELSE "Low Retention"
+  END AS "Employee Retention"
+FROM fortune_companies
+WHERE industry = "Technology"
+GROUP BY company_name; 
+
+-- Show a list of top ten companies with the highest PTOs which offer healthcare and maternity leave
+
+SELECT company_name, paid_time_off_days, maternity_leave_weeks 
+FROM fortune_companies
+WHERE healthcare_benefits = 1
+ORDER BY paid_time_off_days desc limit 10;
+
